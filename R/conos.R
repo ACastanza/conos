@@ -1060,7 +1060,7 @@ scanKModularity <- function(con, min=3, max=50, by=1, scan.k.self=FALSE, omit.in
     }
     xc <- multilevel.community(x)
     modularity(xc)
-  },n.cores=30)
+  },n.cores=4)
   if(verbose) cat(']\n')
   con$n.cores <- n.cores;
 
