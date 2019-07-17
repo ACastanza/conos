@@ -1,8 +1,29 @@
+## [1.1.2] - 2017-07-16
+ - Changed a description line in the getClusterPrivacy() doc to fix installation under some R3.6 versions (issue 32)
+
+## [1.1.1] - 2019-07-15
+
+## Changed
+
+- Fixed docker build: use of BiocManager, reference to master instead of dev
+- Updated src/Makevars to remove the CXX directive, which trips up older versions of R (3.2.x)
+
+## [1.1.0] - 2019-07-02
+
+## Added
+
+- Support for CCA space
+
+## Changed
+
+- `buildGraph` now use PCA space as the default
+- fixed common variance rescaling to use geometric mean of the target
+
 ## [1.0.3] - 2019-07-02
 
 ## Added
 
- - Support for Seurat v3 objects
+- Support for Seurat v3 objects
 
 ## [1.0.2] - 2019-06-26
 

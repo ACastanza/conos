@@ -191,6 +191,9 @@ clusters in other sample (for example note cluster
 con$plotPanel(clustering="multilevel", use.local.clusters=T, title.size=6)
 ```
 
+    ## Warning: The `printer` argument is deprecated as of rlang 0.3.0.
+    ## This warning is displayed once per session.
+
 ![](walkthrough_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 Next we will build the joint graph that encompasses all the samples. We
@@ -199,16 +202,23 @@ establishing kNN of mNN pairs between the samples. We then append
 within-sample kNN neighbours to the graph to ensure that all the cell
 are included in the graph.
 
-We will use ‘PCA’ space here, which is faster than the default ‘CPCA’
-space, and in most cases gives good results. If your datasets were all
-measured on the same platform you may also want to consider “genes”
-space which can give better resolution in such (simpler) cases. Other
-parameters passed to the `buildGraph()` function below are all default
-values - so are shown just for
+  - We use ‘PCA’ space here which is very fast and will yield good
+    integration in most cases.
+  - CPCA space should provide more accurate alignment under greater
+    dataset-specific distortions.
+  - CCA space optimizes conservation of correlation between datasets and
+    can give yield very good alignments in low-similarity cases
+    (e.g. large evolutionary distances).
+  - If your datasets were all measured on the same platform you may also
+    want to consider “genes” space which can give better resolution in
+    such (simpler) cases.
+
+Other parameters passed to the `buildGraph()` function below are all
+default values - so are shown just for
 information.
 
 ``` r
-con$buildGraph(k=15, k.self=5, space='PCA', ncomps=30, n.odgenes=2000, matching.method='mNN', metric='angular', score.component.variance=TRUE, verbose=TRUE)
+con$buildGraph(k=30, k.self=5, space='PCA', ncomps=30, n.odgenes=2000, matching.method='mNN', metric='angular', score.component.variance=TRUE, verbose=TRUE)
 ```
 
     ## found 0 out of 6 cached PCA  space pairs ... running 6 additional PCA  space pairs  done
@@ -402,27 +412,27 @@ con$embedGraph(method="UMAP", min.dist=0.01, spread=15, n.cores=4)
     ## Convert graph to adjacency list...
     ## Done
     ## Estimate nearest neighbors and commute times...
-    ## Estimating hitting distances: 07:08:04.
+    ## Estimating hitting distances: 18:21:33.
     ## Done.
-    ## Estimating commute distances: 07:08:11.
-    ## Hashing adjacency list: 07:08:11.
+    ## Estimating commute distances: 18:21:46.
+    ## Hashing adjacency list: 18:21:46.
     ## Done.
-    ## Estimating distances: 07:08:11.
+    ## Estimating distances: 18:21:47.
     ## Done
     ## Done.
-    ## All done!: 07:08:14.
+    ## All done!: 18:21:51.
     ## Done
     ## Estimate UMAP embedding...
 
-    ## 07:08:14 Read 12000 rows and found 1 numeric columns
+    ## 18:21:51 Read 12000 rows and found 1 numeric columns
 
-    ## 07:08:14 Commencing smooth kNN distance calibration using 4 threads
+    ## 18:21:51 Commencing smooth kNN distance calibration using 4 threads
 
-    ## 07:08:16 Initializing from normalized Laplacian + noise
+    ## 18:21:52 Initializing from normalized Laplacian + noise
 
-    ## 07:08:17 Commencing optimization for 1000 epochs, with 359242 positive edges using 4 threads
+    ## 18:21:53 Commencing optimization for 1000 epochs, with 368044 positive edges using 4 threads
 
-    ## 07:08:36 Optimization finished
+    ## 18:22:14 Optimization finished
 
     ## Done
 
@@ -578,11 +588,11 @@ new.annot <- setNames(colnames(new.label.probabilities)[apply(new.label.probabil
 head(new.annot)
 ```
 
-    ## MantonBM1_HiSeq_1-GAGGTGATCATTTGGG-1 MantonBM2_HiSeq_1-CTGATAGAGCGTTCCG-1 
+    ## MantonBM1_HiSeq_1-CGATTGACACCTCGGA-1 MantonBM2_HiSeq_1-CTGATAGAGCGTTCCG-1 
     ##                                 "NK"                                 "NK" 
-    ## MantonBM1_HiSeq_1-GAACCTAAGACAATAC-1 MantonBM2_HiSeq_1-GAACCTAAGCTAGTGG-1 
+    ## MantonBM1_HiSeq_1-AGGTCCGTCTCTGCTG-1 MantonBM2_HiSeq_1-GGAAAGCCAGACGCCT-1 
     ##                                 "NK"                                 "NK" 
-    ## MantonBM2_HiSeq_1-ATTACTCTCTCGTTTA-1 MantonBM1_HiSeq_1-GTCATTTGTCGAACAG-1 
+    ## MantonBM2_HiSeq_1-GGGTTGCGTAGCTGCC-1 MantonBM2_HiSeq_1-GACAGAGGTCACAAGG-1 
     ##                                 "NK"                                 "NK"
 
 We now see that all our samples have been labelled automatically\!
@@ -680,13 +690,13 @@ str( con$getClusterCountMatrices() , 1)
 ```
 
     ## List of 4
-    ##  $ MantonBM1_HiSeq_1: num [1:33694, 1:19] 0 0 0 1 0 0 0 0 41 5 ...
+    ##  $ MantonBM1_HiSeq_1: num [1:33694, 1:15] 0 0 0 1 0 0 0 0 38 4 ...
     ##   ..- attr(*, "dimnames")=List of 2
-    ##  $ MantonBM2_HiSeq_1: num [1:33694, 1:19] 0 0 0 0 0 0 0 0 72 4 ...
+    ##  $ MantonBM2_HiSeq_1: num [1:33694, 1:15] 0 0 0 0 0 0 0 0 66 4 ...
     ##   ..- attr(*, "dimnames")=List of 2
-    ##  $ MantonCB1_HiSeq_1: num [1:33694, 1:19] 0 0 0 1 0 0 0 0 98 6 ...
+    ##  $ MantonCB1_HiSeq_1: num [1:33694, 1:15] 0 0 0 0 0 0 0 0 73 5 ...
     ##   ..- attr(*, "dimnames")=List of 2
-    ##  $ MantonCB2_HiSeq_1: num [1:33694, 1:19] 0 0 0 0 0 0 0 0 62 10 ...
+    ##  $ MantonCB2_HiSeq_1: num [1:33694, 1:15] 0 0 0 0 0 0 0 0 136 17 ...
     ##   ..- attr(*, "dimnames")=List of 2
 
 The list above, returns pooled count matrix for each sample, where the
@@ -723,10 +733,7 @@ str(de.info[1:3], 2)
     ##   ..$ res          :'data.frame':    33694 obs. of  6 variables:
     ##   ..$ cm           :Formal class 'dgCMatrix' [package "Matrix"] with 6 slots
     ##   ..$ sample.groups:List of 2
-    ##  $ DC         :List of 3
-    ##   ..$ res          :'data.frame':    33694 obs. of  6 variables:
-    ##   ..$ cm           :Formal class 'dgCMatrix' [package "Matrix"] with 6 slots
-    ##   ..$ sample.groups:List of 2
+    ##  $ DC         : logi NA
     ##  $ dying cells:List of 3
     ##   ..$ res          :'data.frame':    33694 obs. of  6 variables:
     ##   ..$ cm           :Formal class 'dgCMatrix' [package "Matrix"] with 6 slots
@@ -739,20 +746,20 @@ res <- de.info[['B cells']]$res
 head(res[order(res$padj,decreasing = FALSE),])
 ```
 
-    ##                 baseMean log2FoldChange     lfcSE      stat       pvalue
-    ## JCHAIN         394.51245      -3.396684 0.4477261 -7.586524 3.286026e-14
-    ## RP11-386I14.4  397.42964       2.718649 0.4030503  6.745185 1.528324e-11
-    ## CD69           508.16469       2.587829 0.4039742  6.405928 1.494578e-10
-    ## NFKBIA        1089.69234       2.617462 0.4101491  6.381733 1.750947e-10
-    ## CH17-373J23.1  325.23043       2.827490 0.4552153  6.211324 5.253998e-10
-    ## MPO             83.80674      -6.025703 0.9881456 -6.097991 1.074097e-09
+    ##                baseMean log2FoldChange     lfcSE      stat       pvalue
+    ## IGLL1          150.9805      -5.521811 0.7013839 -7.872737 3.469662e-15
+    ## JCHAIN         342.3496      -3.328696 0.4428750 -7.516106 5.643192e-14
+    ## IGHG1          558.5807     -10.827820 1.4442727 -7.497075 6.525766e-14
+    ## IGLC2         3351.0226      -3.506702 0.5181883 -6.767236 1.312659e-11
+    ## RP11-386I14.4  362.2495       2.771804 0.4179236  6.632323 3.304455e-11
+    ## IGKC          2621.3799      -2.514947 0.3824759 -6.575439 4.850972e-11
     ##                       padj
-    ## JCHAIN        5.738059e-10
-    ## RP11-386I14.4 1.334380e-07
-    ## CD69          7.643758e-07
-    ## NFKBIA        7.643758e-07
-    ## CH17-373J23.1 1.834906e-06
-    ## MPO           2.993422e-06
+    ## IGLL1         6.064968e-11
+    ## JCHAIN        3.802346e-10
+    ## IGHG1         3.802346e-10
+    ## IGLC2         5.736319e-08
+    ## RP11-386I14.4 1.155238e-07
+    ## IGKC          1.413250e-07
 
 # Forcing better alignment
 

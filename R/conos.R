@@ -11,8 +11,7 @@ scaledMatricesP2 <- function(p2.objs, data.type, od.genes, var.scale, neighborho
   ## Common variance scaling
   if (var.scale) {
     # use geometric means for variance, as we're trying to focus on the common variance components
-    cgsf <- do.call(cbind, lapply(p2.objs,function(x) x$misc$varinfo[od.genes,]$gsf)) %>%  log() %>% rowMeans() %>% exp()
-    #cgsf <- do.call(cbind, lapply(p2.objs,function(x) x$misc$varinfo[od.genes,]$gsf)) %>% rowMeans()
+    cqv <- do.call(cbind, lapply(p2.objs,function(x) x$misc$varinfo[od.genes,]$qv)) %>%  log() %>% rowMeans() %>% exp()
   }
   ## Prepare the matrices
   cproj <- lapply(p2.objs,function(r) {
@@ -28,7 +27,8 @@ scaledMatricesP2 <- function(p2.objs, data.type, od.genes, var.scale, neighborho
     }
 
     if(var.scale) {
-      # x@x <- x@x*rep(r$misc$varinfo[od.genes,]$gsf,diff(x@p))
+      cgsf <- sqrt(cqv/exp(r$misc$varinfo[od.genes,]$v))
+      cgsf[is.na(cgsf) | !is.finite(cgsf)] <- 0;
       x@x <- x@x*rep(cgsf,diff(x@p))
     }
     if(neighborhood.average) {
@@ -279,6 +279,47 @@ quickPlainPCA <- function(r.n,data.type='counts',k=30,ncomps=30,n.odgenes=NULL,v
 }
 
 
+# Perform CCA (using PMA package or otherwise) on two samples
+#' @param r.n list of p2 objects
+#' @param k neighborhood size to use
+#' @param ncomps number of components to calculate (default=100)
+#' @param n.odgenes number of overdispersed genes to take from each dataset
+#' @param var.scale whether to scale variance (default=TRUE)
+#' @param verbose whether to be verbose
+#' @param neighborhood.average use neighborhood average values
+#' @param n.cores number of cores to use
+quickCCA <- function(r.n,data.type='counts',k=30,ncomps=100,n.odgenes=NULL,var.scale=TRUE,verbose=TRUE,neighborhood.average=FALSE, PMA=FALSE, score.component.variance=FALSE) {
+  
+  od.genes <- commonOverdispersedGenes(r.n, n.odgenes, verbose=verbose)
+  if(length(od.genes)<5) return(NULL);
+
+  ncomps <- min(ncomps, length(od.genes) - 1)
+  sm <- scaledMatrices(r.n, data.type=data.type, od.genes=od.genes, var.scale=var.scale, neighborhood.average=neighborhood.average)
+  sm <- lapply(sm,function(m) m[rowSums(m)>0,])
+  sm <- lapply(sm,scale,scale=F) # center
+  if(PMA) {
+    res <- PMA::CCA(t(sm[[1]]),t(sm[[2]]),K=ncomps,trace=FALSE,standardize=FALSE)
+  } else {
+    res <- irlba::irlba(sm[[1]] %*% t(sm[[2]]),ncomps)
+  }
+  rownames(res$u) <- rownames(sm[[1]])
+  rownames(res$v) <- rownames(sm[[2]])
+  
+  # DEBUG: record gene projections and the original data
+  res$ul <- t(sm[[1]]) %*% res$u # MASS::ginv(sm[[1]]) %*% res$u
+  res$vl <- t(sm[[2]]) %*% res$v
+  res$sm <- sm;
+  # end DEBUG
+  
+  # adjust component weighting
+  cw <- sqrt(res$d); cw <- cw/max(cw)
+  res$u <- res$u %*% diag(cw)
+  res$v <- res$v %*% diag(cw)
+  
+  return(res);
+}
+
+
 # dendrogram modification functions
 #' Set dendrogram node width by breadth of the provided factor
 #' @param d dendrogram
@@ -396,7 +437,7 @@ papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
 ## Benchmarks
 ##################################
 
-#' Get % of clusters that are private to one sample
+#' Get percent of clusters that are private to one sample
 #' @param p2list list of pagoda2 objects on which the panelClust() was run
 #' @param pjc result of panelClust()
 #' @param priv.cutoff percent of total cells of a cluster that have to come from a single cluster
