@@ -1,5 +1,5 @@
 # Set the path to your non metric space library here
-PKG_CXXFLAGS= -I"../inst/include" -I"./n2/include" -I"./leidenalg/igraph-R" -I"./leidenalg/include" -I"./include" $(SHLIB_OPENMP_CXXFLAGS) 
+PKG_CXXFLAGS= -I"../inst/include" -I"./n2/include" -I"./leidenalg/igraph-R" -I"./leidenalg/include" -I"./include" 
 
 PKGB_PATH=`echo 'library(igraph); cat(system.file("libs", package="igraph"))' \
       | ${R_HOME}/bin/R --vanilla --slave`
